@@ -34,7 +34,7 @@ def show_diff(seqm):
         if opcode == 'equal':
             output.append(seqm.a[a0:a1])
         elif opcode == 'insert':
-            output.append('(insert "{}")'.format(seqm.b[b0:b1]))
+            output.append('(insert "{}" at {})'.format(seqm.b[b0:b1], a0))
         elif opcode == 'delete':
             output.append('(delete "{}")'.format(seqm.a[a0:a1]))
         elif opcode == 'replace':
