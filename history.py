@@ -10,10 +10,16 @@ def edit_file_message(initial_message):
     with open(content_file, 'w') as tf:
         tf.write(initial_message)
 
-    subprocess.call(['vim', '-S', vim_options_file, content_file])
+    editor_command = ['vim']
+    if os.path.isfile('options.vim'):
+        editor_command += ['-S', vim_options_file]
+    subprocess.call(editor_command + [content_file])
 
     with open(content_file, 'r') as fp:
         content = fp.read()
+
+    if content[-1] == "\n":
+        content = content[:-1]
 
     os.remove(content_file)
     return content
@@ -23,6 +29,7 @@ def read_file(path):
     with open(path, 'r') as fp:
         content = fp.read()
     return content
+
 
 class Patch(object):
     def __init__(self, old_text, new_length, instructions=None):
@@ -47,7 +54,7 @@ def create_patch(s1, s2) -> Patch:
         elif opcode == 'insert':
             result.add_instruction(['i', a1, seqm.b[b0:b1]])
         elif opcode == 'delete':
-            result.add_instruction(['d', a0, a1, b0, b1])
+            pass
         elif opcode == 'replace':
             result.add_instruction(['r', b0, b1, seqm.b[b0:b1]])
         else:
@@ -89,6 +96,9 @@ def get_history(json_file):
 
 def save_patch(json_file, instructions, new_length):
     history = get_history(json_file)
+    if len(instructions) == 1:
+        if instructions[0][0] == 'e':
+            return
     new_version = {
         "new_length": new_length,
         "instructions": instructions
@@ -109,11 +119,12 @@ def get_current_text(file_history):
     return last_text
 
 
-history_file = 'history.json'
-history = get_history(history_file)
-old_text = get_current_text(history)
+if __name__ == '__main__':
+    history_file = 'history.json'
+    history = get_history(history_file)
+    old_text = get_current_text(history)
 
-new_text = edit_file_message(old_text)
+    new_text = edit_file_message(old_text)
 
-patch_result = create_patch(old_text, new_text)
-save_patch(history_file, patch_result.instructions, patch_result.new_length)
+    patch_result = create_patch(old_text, new_text)
+    save_patch(history_file, patch_result.instructions, patch_result.new_length)
